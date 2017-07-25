@@ -19,19 +19,26 @@ Dodela::Dodela(const Dodela& a){
 }
 
 AkoJeOnda::AkoJeOnda(const AkoJeOnda& a){
-    _us=a._us;
-    _n=a._n;
+    _us=a._us->klon();
+    _n=a._n->klon();
 }
 
 AkoJeOndaInace::AkoJeOndaInace(const AkoJeOndaInace& a){
-    _us=a._us;
-    _n1=a._n1;
-    _n2=a._n2;
+    _us=a._us->klon();
+    _n1=a._n1->klon();
+    _n2=a._n2->klon();
 }
 
 DokJeOnda::DokJeOnda(const DokJeOnda& a){
-    _us=a._us;
-    _n=a._n;
+    _us=a._us->klon();
+    _n=a._n->klon();
+}
+
+ForPetlja::ForPetlja(const ForPetlja& a){
+    _id=a._id;
+    _iz1=a._iz1->klon();
+    _iz2=a._iz2->klon();
+    _n=a._n->klon();
 }
 
 Blok::Blok(const Blok& a){
@@ -91,6 +98,20 @@ DokJeOnda& DokJeOnda::operator=(const DokJeOnda& a) {
   }
   return *this;
 }
+
+
+ForPetlja& ForPetlja::operator=(const ForPetlja& a) {
+  if(this != &a) {
+      delete _iz1;
+      delete _iz2;
+      delete _n;
+      _iz1 = a._iz1->klon();
+      _iz2 = a._iz2->klon();
+      _n = a._n->klon();
+  }
+  return *this;
+}
+
 
 Blok& Blok::operator=(const Blok& a) {
   if(this != &a) {
@@ -152,6 +173,28 @@ void DokJeOnda::interpretiraj() const {
         _n->interpretiraj();
 }
 
+void ForPetlja::interpretiraj() const {
+    for(vector<string>::iterator i=id_int.begin(); i!=id_int.end(); ++i)
+        if(!(_id.compare(*i))) {
+            if(map_int.count(_id))
+                map_int[_id] = _iz1->vrednost();
+            else
+                map_int.insert(std::pair<string,int>(_id,_iz1->vrednost())); 
+        }
+    if(_oznaka==1){
+        while(map_int[_id] < _iz2->vrednost()){
+            _n->interpretiraj();
+            map_int[_id]++;
+        }
+    }
+    else {
+        while(map_int[_id] > _iz2->vrednost()){
+            _n->interpretiraj();
+            map_int[_id]--;
+        }
+    }
+}
+
 void Blok::interpretiraj() const {
     for(Naredba* i : _vn)
         i->interpretiraj();
@@ -183,6 +226,12 @@ DokJeOnda::~DokJeOnda() {
 
 }
 
+ForPetlja::~ForPetlja(){
+    delete _iz1;
+    delete _iz2;
+    delete _n;
+}
+
 // klon
 
 Naredba* IspisiString::klon() const {
@@ -211,6 +260,10 @@ Naredba* AkoJeOndaInace:: klon() const {
 
 Naredba* DokJeOnda:: klon() const {
     return new DokJeOnda(*this);
+}
+
+Naredba* ForPetlja:: klon() const {
+    return new ForPetlja(*this);
 }
 
 Naredba* Blok:: klon() const {

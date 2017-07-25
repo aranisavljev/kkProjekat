@@ -35,7 +35,8 @@ vector<string> id_int;
 }
 
 %token program_token var_token integer_token real_token boolean_token begin_token end_token if_token else_token then_token dodela_token
-%token while_token do_token read_token write_token manjeJednako_token veceJednako_token jesteJednako_token nijeJednako_token
+%token while_token do_token read_token write_token manjeJednako_token veceJednako_token jesteJednako_token nijeJednako_token 
+%token for_token to_token downto_token
 %token true_token false_token
 %token <i> int_token
 %token <f> float_token
@@ -139,6 +140,21 @@ Naredba: write_token '(' Izraz ')' ';' {
     delete $2;
     delete $4;
 }
+| for_token id_token dodela_token Izraz to_token Izraz do_token Naredba {
+    $$ = new ForPetlja(*$2, $4, $6, $8, 1);
+    delete $2;
+    delete $4;
+    delete $6;
+    delete $8;
+}
+| for_token id_token dodela_token Izraz downto_token Izraz do_token Naredba {
+    $$ = new ForPetlja(*$2, $4, $6, $8, 0);
+    delete $2;
+    delete $4;
+    delete $6;
+    delete $8;
+}
+
 | Blok ';' {
     $$=$1;
 }

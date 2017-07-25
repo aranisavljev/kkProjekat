@@ -34,7 +34,6 @@ public:
     ~IspisiIzraz();
     IspisiIzraz(const IspisiIzraz &n);
 private:
-    //IspisiIzraz& operator=(const IspisiIzraz& e);
     Izraz *_iz;
 };
 
@@ -72,7 +71,6 @@ public:
 private:
     AkoJeOnda& operator=(const AkoJeOnda& a);
     AkoJeOnda(const AkoJeOnda& a);
-    //AkoJeOnda& operator=(const AkoJeOnda& a);
     Izraz *_us;
     Naredba *_n;
 };
@@ -87,7 +85,6 @@ public:
 private:
     AkoJeOndaInace& operator=(const AkoJeOndaInace& a);
     AkoJeOndaInace(const AkoJeOndaInace& a);
-  //  AkoJeOndaInace& operator=(const AkoJeOndaInace& a);
     Izraz *_us;
     Naredba *_n1;
     Naredba *_n2;
@@ -103,22 +100,37 @@ public:
 private:
     DokJeOnda& operator=(const DokJeOnda& a);
     DokJeOnda(const DokJeOnda& a);  
-    //DokJeOnda& operator=(const DokJeOnda& a);
     Izraz *_us;
     Naredba *_n;
 };
+
+class ForPetlja : public Naredba {
+public:
+    ForPetlja(string id, Izraz *iz1, Izraz *iz2, Naredba *n, int oznaka)
+        :_id(id), _iz1(iz1->klon()), _iz2(iz2->klon()), _n(n->klon()), _oznaka(oznaka) {} 
+    void interpretiraj() const;
+    ~ForPetlja();  
+    Naredba* klon() const;
+private:
+    ForPetlja& operator=(const ForPetlja& a);
+    ForPetlja(const ForPetlja& a);  
+    string _id;
+    Izraz *_iz1;
+    Izraz *_iz2;
+    Naredba *_n;
+    int _oznaka;
+};
+
 
 class Blok : public Naredba {
 public:
     Blok(vector<Naredba*> vn)
         :_vn(vn) {}
     void interpretiraj() const;
-    //~Blok();
     Naredba* klon() const;
 private:
     Blok& operator=(const Blok& a);
     Blok(const Blok& a);
-    //Blok& operator=(const Blok& e);
     vector<Naredba*> _vn;
 };
 
