@@ -1,0 +1,234 @@
+%{
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <map>
+#include "naredba.hpp"
+#include <vector>
+
+
+#define YYDEBUG 1
+
+using namespace std;
+
+void yyerror(string msg){
+    cerr << "Sintaksna geska: " << msg << endl;
+    exit(EXIT_FAILURE);
+}
+
+extern int yylex();
+
+map<string, int> map_int;
+vector<string> id_int;
+
+%}
+
+%union{
+    int i;
+    float f;
+    string *s;
+    Izraz *iz;
+    Naredba *n;
+    vector<string> *id;
+    vector<Naredba*> *vn;
+}
+
+%token program_token var_token integer_token real_token boolean_token begin_token end_token if_token else_token then_token dodela_token
+%token while_token do_token read_token write_token manjeJednako_token veceJednako_token jesteJednako_token nijeJednako_token
+%token true_token false_token
+%token <i> int_token
+%token <f> float_token
+%token <s> id_token string_token
+
+%type <iz> Izraz
+%type <id> ListaPromenljivih
+%type <vn> NizNaredbi 
+%type <n> Naredba Blok
+
+%nonassoc then_token
+%nonassoc else_token
+%left jesteJednako_token nijeJednako_token manjeJednako_token veceJednako_token '<' '>'
+%left '+' '-'
+%left '*' '/' '%'
+
+%%
+
+Program: program_token id_token ';' Deklaracije Blok '.' {
+    $5->interpretiraj();
+    delete $5;
+}
+;
+
+Deklaracije: var_token ListeDekl  
+;
+
+ListeDekl: Dekl ';' ListeDekl
+| Dekl ';'
+;
+
+Dekl: ListaPromenljivih ':' integer_token {
+    for(auto i = $1->begin(); i!=$1->end(); i++)
+        id_int.push_back(*i);
+}
+;
+
+ListaPromenljivih: ListaPromenljivih ',' id_token {
+    $$=$1;
+    $$->push_back(*$3);
+}
+| id_token {
+    $$ = new vector<string>();
+    $$->push_back(*$1);
+}
+;
+
+/*Tip: integer_token
+| real_token
+| boolean_token
+;
+*/
+
+Blok: begin_token NizNaredbi end_token {
+    $$ = new Blok(*$2);
+    delete $2;
+}
+;
+
+NizNaredbi: NizNaredbi Naredba {
+    $$=$1;
+    $$->push_back($2);
+}
+| Naredba {
+    $$ = new vector<Naredba*> ();
+    $$->push_back($1);
+}
+;
+
+Naredba: write_token '(' Izraz ')' ';' {
+    $$ = new IspisiIzraz($3);
+    delete $3;
+}
+| write_token '(' string_token ')' ';' {
+    $$ = new IspisiString(*$3);
+    delete $3;
+}
+| read_token '(' id_token ')' ';' {
+    $$ = new UcitajVrednost(*$3);
+    delete $3;
+}
+| id_token dodela_token Izraz ';' {
+    $$ = new Dodela(*$1, $3);
+    delete $1;
+    delete $3;
+
+}
+| if_token Izraz then_token Naredba {
+    $$ = new AkoJeOnda($2, $4);
+    delete $2;
+    delete $4;
+}
+| if_token Izraz then_token Naredba else_token Naredba {
+    $$ = new AkoJeOndaInace($2, $4, $6);
+    delete $2;
+    delete $4;
+    delete $6;
+}
+| while_token Izraz do_token Naredba {
+    $$ = new DokJeOnda($2, $4);
+    delete $2;
+    delete $4;
+}
+| Blok ';' {
+    $$=$1;
+}
+;
+
+Izraz: Izraz '+' Izraz {
+    $$ = new Zbir($1, $3);
+    delete $1;
+    delete $3;
+}
+| Izraz '-' Izraz {
+    $$ = new Razlika($1, $3);
+    delete $1;
+    delete $3;
+}
+| Izraz '*' Izraz {
+    $$ = new Proizvod($1, $3);
+    delete $1;
+    delete $3;
+}
+| Izraz '/' Izraz {
+    $$ = new Kolicnik($1, $3);
+    delete $1;
+    delete $3;
+}
+| Izraz '%' Izraz {
+    $$ = new Mod($1, $3);
+    delete $1;
+    delete $3;
+}
+| Izraz '>' Izraz {
+    $$ = new Vece($1, $3);
+    delete $1;
+    delete $3;
+}
+| Izraz '<' Izraz {
+    $$ = new Manje($1, $3);
+    delete $1;
+    delete $3;
+}
+| Izraz manjeJednako_token Izraz {
+    $$ = new ManjeJednako($1, $3);
+    delete $1;
+    delete $3;
+}
+| Izraz veceJednako_token Izraz {
+    $$ = new VeceJednako($1, $3);
+    delete $1;
+    delete $3;
+}
+| Izraz nijeJednako_token Izraz {
+    $$ = new NijeJednako($1, $3);
+    delete $1;
+    delete $3;
+}
+| Izraz jesteJednako_token Izraz {
+    $$ = new Jednako($1, $3);
+    delete $1;
+    delete $3;
+}
+| '(' Izraz ')' {
+    $$=$2;
+}
+| id_token {
+    $$ = new Promenljiva(*$1);
+    delete $1;        
+}
+| int_token {
+    $$=new iKonstanta($1);
+}
+| float_token {
+    $$=new fKonstanta($1);
+}
+| true_token {
+    $$=new bKonstanta(1);
+}
+| false_token {
+    $$=new bKonstanta(0);
+}
+;
+
+%% 
+
+extern FILE* yyin;
+
+int main(int argc, char** argv){
+    yyin = fopen("1.txt", "r");
+    if(yyin == NULL)
+        yyerror("Error: error opening pascal file");
+    yyparse();
+    fclose(yyin);
+    return 0;
+}
