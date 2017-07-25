@@ -182,11 +182,6 @@ DokJeOnda::~DokJeOnda() {
     delete _n;
 
 }
-//Blok::~Blok() {
-//    vector<Naredba*>::iterator it;
-//    for(it=_vn.begin(); it!=_vn.end(); it++)
-//        delete *it;
-//}
 
 // klon
 
